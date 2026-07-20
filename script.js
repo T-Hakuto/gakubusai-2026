@@ -458,6 +458,11 @@ if (portalLinkContainer) {
     const title = document.createElement('h3'); title.textContent = section.title; group.appendChild(title);
     section.links.forEach(([label, date, url]) => {
       const link = document.createElement('a'); link.href = url || `#${label.replace(/[^a-zA-Z0-9]/g, '') || 'page'}`;
+      if (url) {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.setAttribute('aria-label', `${label}の特設ページを新しいタブで開く`);
+      }
       const text = document.createElement('span'); text.textContent = date ? `${label}（${date}）` : label;
       const arrow = document.createElement('span'); arrow.textContent = '→';
       link.append(text, arrow); group.appendChild(link);
