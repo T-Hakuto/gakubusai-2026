@@ -126,7 +126,7 @@ publicCalendarFrame.after(embedNote);
 // Render the public Google Calendar with department-specific event colours.
 const calendarApiKey = 'AIzaSyBIdsYJ_QWW_T9T7wa7BLCysqkgB0KzYPE';
 const festivalCalendarId = '38ec9a8d98027b83dc07dbe8e8e86960c1af323771e1873ac47b65bd15bb72e1@group.calendar.google.com';
-const activeCalendarApiKey = 'AIzaSyBfqMfkbutJG5rpAOAXxKT8L6lHBcUarAM';
+const activeCalendarApiKey = 'AIzaSyDvgGgynG7JCCDiNDI21zq7VA4axhxk-1w';
 const departmentColours = {
   'いざかや': '#f3c6c2', 'いちにかい': '#cbe5a1', 'SE': '#83d7d3', 'MM': '#c7c7c7',
   '経理': '#f8dd72', '工房': '#f6c0d5', '渉外': '#d9c9ec', 'ステージ': '#f8b166'
