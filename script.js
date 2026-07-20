@@ -126,6 +126,7 @@ publicCalendarFrame.after(embedNote);
 // Render the public Google Calendar with department-specific event colours.
 const calendarApiKey = 'AIzaSyBIdsYJ_QWW_T9T7wa7BLCysqkgB0KzYPE';
 const festivalCalendarId = '38ec9a8d98027b83dc07dbe8e8e86960c1af323771e1873ac47b65bd15bb72e1@group.calendar.google.com';
+const activeCalendarApiKey = 'AIzaSyBfqMfkbutJG5rpAOAXxKT8L6lHBcUarAM';
 const departmentColours = {
   'いざかや': '#f3c6c2', 'いちにかい': '#cbe5a1', 'SE': '#83d7d3', 'MM': '#c7c7c7',
   '経理': '#f8dd72', '工房': '#f6c0d5', '渉外': '#d9c9ec', 'ステージ': '#f8b166'
@@ -182,7 +183,7 @@ async function renderDepartmentCalendar() {
   calendar.innerHTML = '<p class="calendar-loading">予定を読み込んでいます…</p>';
   calendarHeading.textContent = calendarView === 'week' ? '今週の予定' : `${bounds.first.getFullYear()}年${bounds.first.getMonth() + 1}月`;
   try {
-    const params = new URLSearchParams({ key: calendarApiKey, singleEvents: 'true', orderBy: 'startTime', timeMin: bounds.start.toISOString(), timeMax: bounds.end.toISOString(), maxResults: '2500', timeZone: 'Asia/Tokyo', eventLabelVersion: '1' });
+    const params = new URLSearchParams({ key: activeCalendarApiKey, singleEvents: 'true', orderBy: 'startTime', timeMin: bounds.start.toISOString(), timeMax: bounds.end.toISOString(), maxResults: '2500', timeZone: 'Asia/Tokyo', eventLabelVersion: '1' });
     const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(festivalCalendarId)}/events?${params}`);
     if (!response.ok) {
       const detail = await response.json().catch(() => ({}));
@@ -190,8 +191,8 @@ async function renderDepartmentCalendar() {
     }
     const { items = [] } = await response.json();
     const [coloursResponse, calendarDetailsResponse] = await Promise.all([
-      fetch(`https://www.googleapis.com/calendar/v3/colors?key=${calendarApiKey}`),
-      fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(festivalCalendarId)}?key=${calendarApiKey}&eventLabelVersion=1`)
+      fetch(`https://www.googleapis.com/calendar/v3/colors?key=${activeCalendarApiKey}`),
+      fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(festivalCalendarId)}?key=${activeCalendarApiKey}&eventLabelVersion=1`)
     ]);
     const googleEventColours = coloursResponse.ok ? ((await coloursResponse.json()).event || {}) : {};
     const calendarDetails = calendarDetailsResponse.ok ? await calendarDetailsResponse.json() : {};
@@ -359,7 +360,7 @@ function topicDateText(event) {
 async function updateTodaysTopic() {
   if (!topicPanel || !topicTitle || !topicLink) return;
   try {
-    const params = new URLSearchParams({ key: calendarApiKey, singleEvents: 'true', orderBy: 'startTime', timeMin: new Date().toISOString(), maxResults: '1', timeZone: 'Asia/Tokyo', eventLabelVersion: '1' });
+    const params = new URLSearchParams({ key: activeCalendarApiKey, singleEvents: 'true', orderBy: 'startTime', timeMin: new Date().toISOString(), maxResults: '1', timeZone: 'Asia/Tokyo', eventLabelVersion: '1' });
     const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(festivalCalendarId)}/events?${params}`);
     const { items = [] } = await response.json();
     const event = items[0];
