@@ -444,7 +444,7 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && !e
 const portalLinkContainer = document.querySelector('.department-links');
 if (portalLinkContainer) {
   const portalSections = [
-    { title: '企画特設ページ', links: [['夏祭り', '8/11', 'https://hyuga2026-tech.github.io/Summer-P-fes-2026/#schedule'], ['24時間テレビ', '9/26–27'], ['コンパ', '10/5'], ['決起集会', '11/11'], ['古本市', '']] },
+    { title: '企画特設ページ', links: [['夏祭り', '8/11', 'https://hyuga2026-tech.github.io/Summer-P-fes-2026'], ['24時間テレビ', '9/26–27'], ['コンパ', '10/5'], ['決起集会', '11/11'], ['古本市', '']] },
     { title: '便利機能', links: [['シフト', ''], ['各種マニュアル', ''], ['マップ', '']] },
     { title: 'What’s 学部祭？', links: [['テーマ・テーマソングについて', ''], ['インタビュー', ''], ['意気込みボード', '']] },
     { title: '遊び', links: [['デジタル自由帳', ''], ['ゲーム', '']] }
