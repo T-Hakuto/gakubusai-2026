@@ -267,11 +267,12 @@ function newsDateValue(value) {
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
-function recruitmentStatus(value) {
-  const symbol = String(value || '').trim();
-  if (['〇', '○', '◯'].includes(symbol)) return { label: '募集中', className: 'is-open' };
-  if (symbol === '△') return { label: '締め切り間近', className: 'is-soon' };
-  if (['✕', '×', '✖', 'x', 'X'].includes(symbol)) return { label: '募集終了', className: 'is-closed' };
+function recruitmentStatus(value, fallbackValue = '') {
+  const symbols = [value, fallbackValue].map(item => String(item || '').trim());
+  if (symbols.some(symbol => ['〇', '○', '◯'].includes(symbol))) return { label: '募集中', className: 'is-open' };
+  if (symbols.includes('△')) return { label: '締め切り間近', className: 'is-soon' };
+  if (symbols.some(symbol => ['✕', '×', '✖', 'x', 'X'].includes(symbol))) return { label: '募集終了', className: 'is-closed' };
+  if (symbols.some(symbol => symbol.toLowerCase() === 'true')) return { label: '募集中', className: 'is-open' };
   return null;
 }
 
@@ -311,7 +312,7 @@ function renderSheetNews(items) {
     const meta = document.createElement('div');
     meta.className = 'news-meta';
     meta.appendChild(tag);
-    const status = recruitmentStatus(item.recruitment);
+    const status = recruitmentStatus(item.recruitmentState, item.recruitment);
     if (status) {
       const statusLabel = document.createElement('span');
       statusLabel.className = `recruitment-status ${status.className}`;
@@ -345,7 +346,8 @@ async function loadSheetNews() {
       published: column(['公開', '表示', 'published']), date: column(['日付', 'date']),
       category: column(['種類', 'カテゴリ', '部署', 'category']), title: column(['見出し', 'タイトル', '内容', 'title']),
       detail: column(['詳細', '本文', '説明', 'detail', 'description']), link: column(['リンク', 'URL', 'url']),
-      recruitment: column(['募集', '募集状況', '応募', 'recruitment'])
+      recruitmentState: column(['締切情報', '募集状況', '応募状況', 'recruitment_status']),
+      recruitment: column(['募集', '応募', 'recruitment'])
     };
     if (indexes.date < 0 || indexes.title < 0) throw new Error('「日付」と「見出し」の列が必要です');
     const hiddenValues = new Set(['false', '0', 'no', '非公開', '非表示']);
@@ -353,6 +355,7 @@ async function loadSheetNews() {
       published: indexes.published < 0 ? '' : row[indexes.published], date: row[indexes.date],
       category: indexes.category < 0 ? '' : row[indexes.category], title: row[indexes.title],
       detail: indexes.detail < 0 ? '' : row[indexes.detail], link: indexes.link < 0 ? '' : row[indexes.link],
+      recruitmentState: indexes.recruitmentState < 0 ? '' : row[indexes.recruitmentState],
       recruitment: indexes.recruitment < 0 ? '' : row[indexes.recruitment]
     })).filter(item => item.title?.trim() && !hiddenValues.has(String(item.published).trim().toLowerCase()))
       .sort((first, second) => newsDateValue(second.date) - newsDateValue(first.date));
