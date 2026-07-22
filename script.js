@@ -445,7 +445,7 @@ const portalLinkContainer = document.querySelector('.department-links');
 if (portalLinkContainer) {
   const portalSections = [
     { title: '企画特設ページ', links: [['夏祭り', '8/11', 'https://hyuga2026-tech.github.io/Summer-P-fes-2026/'], ['24時間テレビ', '9/26–27'], ['コンパ', '10/5'], ['決起集会', '11/11'], ['古本市', '']] },
-    { title: '便利機能', links: [['シフト', ''], ['経費申請', '', 'https://docs.google.com/forms/d/e/1FAIpQLScHTIsKuJUt3Hgsx67k4408f_L3Vyl4i_QO21CJdECuvWdO9A/viewform'], ['各種マニュアル', ''], ['マップ', '']] },
+    { title: '便利機能', links: [['シフト', ''], ['経費申請', '', 'https://docs.google.com/forms/d/e/1FAIpQLScHTIsKuJUt3Hgsx67k4408f_L3Vyl4i_QO21CJdECuvWdO9A/viewform'], ['マニュアル', ''], ['マップ', '']] },
     { title: 'What’s 学部祭？', links: [['テーマ・テーマソングについて', ''], ['インタビュー', ''], ['意気込みボード', '']] },
     { title: '遊び', links: [['デジタル自由帳', ''], ['ゲーム', '']] }
   ];
@@ -453,6 +453,7 @@ if (portalLinkContainer) {
   portal.className = 'portal-links'; portal.setAttribute('aria-label', '学部祭ポータルリンク');
   const heading = document.createElement('p'); heading.textContent = 'FESTIVAL PORTAL'; portal.appendChild(heading);
   const groups = document.createElement('div'); groups.className = 'portal-groups';
+  const utilityLogos = { 'シフト': '◷', '経費申請': '¥', 'マニュアル': '≡', 'マップ': '⌖' };
   portalSections.forEach((section, index) => {
     const group = document.createElement('div'); group.className = `portal-group portal-group--${['special', 'utility', 'about', 'play'][index]}`;
     const groupIds = ['special', 'utility', 'about', 'play'];
@@ -465,11 +466,12 @@ if (portalLinkContainer) {
         link.rel = 'noopener noreferrer';
         link.setAttribute('aria-label', `${label}を新しいタブで開く`);
       }
-      if (label === '経費申請') {
-        link.classList.add('utility-expense');
+      if (utilityLogos[label]) {
+        link.classList.add('utility-card');
+        if (label === '経費申請') link.classList.add('utility-expense');
         const logo = document.createElement('span');
-        logo.className = 'utility-expense-logo';
-        logo.textContent = '¥';
+        logo.className = 'utility-logo';
+        logo.textContent = utilityLogos[label];
         logo.setAttribute('aria-hidden', 'true');
         link.appendChild(logo);
       }
