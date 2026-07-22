@@ -451,6 +451,45 @@ function addModalDetail(container, label, content, className = '') {
   const value = document.createElement('div'); value.textContent = content;
   detail.append(heading, value); container.appendChild(detail);
 }
+function appendExternalLink(container, url, label = url) {
+  const href = /^www\./i.test(url) ? `https://${url}` : url;
+  if (!/^https?:\/\//i.test(href)) { container.appendChild(document.createTextNode(label)); return; }
+  const link = document.createElement('a');
+  link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+  link.textContent = label; link.setAttribute('aria-label', `${label}を新しいタブで開く`);
+  container.appendChild(link);
+}
+function appendPlainLinkedText(container, content) {
+  const text = String(content || '');
+  const linkPattern = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
+  let lastIndex = 0;
+  for (const match of text.matchAll(linkPattern)) {
+    container.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+    const markdownLabel = match[1];
+    const matchedUrl = match[2] || match[3];
+    const url = matchedUrl.replace(/[.,。、，」』】]+$/, '');
+    appendExternalLink(container, url, markdownLabel || url);
+    if (!markdownLabel && matchedUrl.length > url.length) {
+      container.appendChild(document.createTextNode(matchedUrl.slice(url.length)));
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  container.appendChild(document.createTextNode(text.slice(lastIndex)));
+}
+function appendSafeRichText(container, node) {
+  if (node.nodeType === 3) { appendPlainLinkedText(container, node.textContent); return; }
+  if (node.nodeType !== 1) return;
+  const tagName = node.tagName.toLowerCase();
+  if (tagName === 'a') {
+    appendExternalLink(container, node.getAttribute('href') || '', node.textContent?.trim() || node.getAttribute('href') || 'リンク');
+    return;
+  }
+  if (tagName === 'br') { container.appendChild(document.createTextNode('\n')); return; }
+  const isBlock = ['p', 'div', 'li'].includes(tagName);
+  if (isBlock && container.textContent && !container.textContent.endsWith('\n')) container.appendChild(document.createTextNode('\n'));
+  node.childNodes.forEach(child => appendSafeRichText(container, child));
+  if (isBlock && !container.textContent.endsWith('\n')) container.appendChild(document.createTextNode('\n'));
+}
 function addLinkedModalDetail(container, label, content) {
   if (!content) return;
   const detail = document.createElement('div');
@@ -458,23 +497,12 @@ function addLinkedModalDetail(container, label, content) {
   const heading = document.createElement('strong'); heading.textContent = label;
   const value = document.createElement('div');
   const text = String(content);
-  const urlPattern = /https?:\/\/[^\s<>"']+/gi;
-  let lastIndex = 0;
-  for (const match of text.matchAll(urlPattern)) {
-    const matchedUrl = match[0];
-    const url = matchedUrl.replace(/[.,。、，」』】]+$/, '');
-    const trailingText = matchedUrl.slice(url.length);
-    value.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
-    if (url) {
-      const link = document.createElement('a');
-      link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
-      link.textContent = url; link.setAttribute('aria-label', `${url}を新しいタブで開く`);
-      value.appendChild(link);
-    }
-    if (trailingText) value.appendChild(document.createTextNode(trailingText));
-    lastIndex = match.index + matchedUrl.length;
+  if (/<(?:a|br|p|div|li)\b/i.test(text)) {
+    const parsed = new DOMParser().parseFromString(text, 'text/html');
+    parsed.body.childNodes.forEach(node => appendSafeRichText(value, node));
+  } else {
+    appendPlainLinkedText(value, text);
   }
-  value.appendChild(document.createTextNode(text.slice(lastIndex)));
   detail.append(heading, value); container.appendChild(detail);
 }
 function closeEventModal() { eventModal.hidden = true; document.body.style.overflow = ''; }
