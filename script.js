@@ -229,7 +229,7 @@ nextButton.addEventListener('click', () => setTimeout(renderDepartmentCalendar, 
 renderDepartmentCalendar();
 
 // Load announcements from a Google Sheets CSV published to the web.
-// Columns: 公開 / 日付 / 種類 / 見出し / リンク
+// Columns: 公開 / 日付 / 種類 / 見出し / 詳細 / リンク / 募集
 const newsSection = document.getElementById('news');
 const newsList = newsSection?.querySelector('.news-list');
 const newsStatus = document.getElementById('news-status');
@@ -267,6 +267,14 @@ function newsDateValue(value) {
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
+function recruitmentStatus(value) {
+  const symbol = String(value || '').trim();
+  if (['〇', '○', '◯'].includes(symbol)) return { label: '募集中', className: 'is-open' };
+  if (symbol === '△') return { label: '締め切り間近', className: 'is-soon' };
+  if (['✕', '×', '✖', 'x', 'X'].includes(symbol)) return { label: '募集終了', className: 'is-closed' };
+  return null;
+}
+
 function googleSheetCsvUrl(value) {
   const url = new URL(value, window.location.href);
   const sheetMatch = url.pathname.match(/^\/spreadsheets\/d\/([^/]+)/);
@@ -282,8 +290,14 @@ function renderSheetNews(items) {
   items.forEach(item => {
     const link = document.createElement('a');
     const safeLink = /^(https?:\/\/|#)/i.test(item.link || '') ? item.link : '#news';
-    link.href = safeLink;
-    if (/^https?:\/\//i.test(item.link)) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
+    link.href = item.detail?.trim() ? '#news-detail' : safeLink;
+    if (item.detail?.trim()) {
+      link.setAttribute('aria-haspopup', 'dialog');
+      link.setAttribute('aria-label', `${item.title}の詳細を表示`);
+      link.addEventListener('click', event => { event.preventDefault(); openNewsModal(item); });
+    } else if (/^https?:\/\//i.test(item.link)) {
+      link.target = '_blank'; link.rel = 'noopener noreferrer';
+    }
     const time = document.createElement('time');
     time.textContent = formatNewsDate(item.date);
     const tag = document.createElement('span');
@@ -294,11 +308,21 @@ function renderSheetNews(items) {
       tag.style.borderColor = departmentColour;
       tag.style.color = readableTextColour(departmentColour);
     }
+    const meta = document.createElement('div');
+    meta.className = 'news-meta';
+    meta.appendChild(tag);
+    const status = recruitmentStatus(item.recruitment);
+    if (status) {
+      const statusLabel = document.createElement('span');
+      statusLabel.className = `recruitment-status ${status.className}`;
+      statusLabel.textContent = status.label;
+      meta.appendChild(statusLabel);
+    }
     const title = document.createElement('p');
     title.textContent = item.title;
     const arrow = document.createElement('i');
     arrow.textContent = '→'; arrow.setAttribute('aria-hidden', 'true');
-    link.append(time, tag, title, arrow);
+    link.append(time, meta, title, arrow);
     fragment.appendChild(link);
   });
   newsList.replaceChildren(fragment);
@@ -320,14 +344,16 @@ async function loadSheetNews() {
     const indexes = {
       published: column(['公開', '表示', 'published']), date: column(['日付', 'date']),
       category: column(['種類', 'カテゴリ', '部署', 'category']), title: column(['見出し', 'タイトル', '内容', 'title']),
-      link: column(['リンク', 'URL', '詳細', 'url'])
+      detail: column(['詳細', '本文', '説明', 'detail', 'description']), link: column(['リンク', 'URL', 'url']),
+      recruitment: column(['募集', '募集状況', '応募', 'recruitment'])
     };
     if (indexes.date < 0 || indexes.title < 0) throw new Error('「日付」と「見出し」の列が必要です');
     const hiddenValues = new Set(['false', '0', 'no', '非公開', '非表示']);
     const items = rows.map(row => ({
       published: indexes.published < 0 ? '' : row[indexes.published], date: row[indexes.date],
       category: indexes.category < 0 ? '' : row[indexes.category], title: row[indexes.title],
-      link: indexes.link < 0 ? '' : row[indexes.link]
+      detail: indexes.detail < 0 ? '' : row[indexes.detail], link: indexes.link < 0 ? '' : row[indexes.link],
+      recruitment: indexes.recruitment < 0 ? '' : row[indexes.recruitment]
     })).filter(item => item.title?.trim() && !hiddenValues.has(String(item.published).trim().toLowerCase()))
       .sort((first, second) => newsDateValue(second.date) - newsDateValue(first.date));
     const limit = Math.max(1, Number(newsSection.dataset.newsLimit) || 5);
@@ -425,6 +451,32 @@ function addModalDetail(container, label, content, className = '') {
   const value = document.createElement('div'); value.textContent = content;
   detail.append(heading, value); container.appendChild(detail);
 }
+function addLinkedModalDetail(container, label, content) {
+  if (!content) return;
+  const detail = document.createElement('div');
+  detail.className = 'event-modal-detail event-modal-description';
+  const heading = document.createElement('strong'); heading.textContent = label;
+  const value = document.createElement('div');
+  const text = String(content);
+  const urlPattern = /https?:\/\/[^\s<>"']+/gi;
+  let lastIndex = 0;
+  for (const match of text.matchAll(urlPattern)) {
+    const matchedUrl = match[0];
+    const url = matchedUrl.replace(/[.,。、，」』】]+$/, '');
+    const trailingText = matchedUrl.slice(url.length);
+    value.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+    if (url) {
+      const link = document.createElement('a');
+      link.href = url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      link.textContent = url; link.setAttribute('aria-label', `${url}を新しいタブで開く`);
+      value.appendChild(link);
+    }
+    if (trailingText) value.appendChild(document.createTextNode(trailingText));
+    lastIndex = match.index + matchedUrl.length;
+  }
+  value.appendChild(document.createTextNode(text.slice(lastIndex)));
+  detail.append(heading, value); container.appendChild(detail);
+}
 function closeEventModal() { eventModal.hidden = true; document.body.style.overflow = ''; }
 function openEventModal(event, colour) {
   eventModal.innerHTML = '';
@@ -438,6 +490,35 @@ function openEventModal(event, colour) {
   addModalDetail(card, 'DETAIL', event.description, 'event-modal-description');
   if (event.htmlLink) { const link = document.createElement('a'); link.className = 'event-modal-link'; link.href = event.htmlLink; link.target = '_blank'; link.rel = 'noreferrer'; link.textContent = 'Google カレンダーで開く →'; card.appendChild(link); }
   eventModal.appendChild(card); eventModal.hidden = false; document.body.style.overflow = 'hidden'; close.focus();
+}
+function openNewsModal(item) {
+  eventModal.innerHTML = '';
+  const colour = departmentColours[String(item.category || '').trim()] || '#111';
+  const card = document.createElement('div');
+  card.className = 'event-modal-card news-modal-card';
+  card.style.borderTopColor = colour;
+  const close = document.createElement('button');
+  close.className = 'event-modal-close'; close.type = 'button'; close.textContent = '×';
+  close.setAttribute('aria-label', '閉じる'); close.addEventListener('click', closeEventModal);
+  const label = document.createElement('p');
+  label.className = 'event-modal-label'; label.textContent = 'ANNOUNCEMENT DETAIL';
+  const title = document.createElement('h3');
+  title.className = 'event-modal-title'; title.textContent = item.title || 'お知らせ';
+  card.append(close, label, title);
+  addModalDetail(card, 'DATE', formatNewsDate(item.date));
+  addModalDetail(card, 'CATEGORY', item.category || 'お知らせ');
+  addLinkedModalDetail(card, 'DETAIL', item.detail);
+  if (/^https?:\/\//i.test(item.link || '')) {
+    const relatedLink = document.createElement('a');
+    relatedLink.className = 'event-modal-link'; relatedLink.href = item.link;
+    relatedLink.target = '_blank'; relatedLink.rel = 'noopener noreferrer';
+    relatedLink.textContent = '関連ページを開く →';
+    card.appendChild(relatedLink);
+  }
+  eventModal.appendChild(card);
+  eventModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  close.focus();
 }
 eventModal.addEventListener('click', event => { if (event.target === eventModal) closeEventModal(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !eventModal.hidden) closeEventModal(); });
