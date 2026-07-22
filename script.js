@@ -276,6 +276,13 @@ function recruitmentStatus(value, fallbackValue = '') {
   return null;
 }
 
+function createRecruitmentStatusLabel(status) {
+  const label = document.createElement('span');
+  label.className = `recruitment-status ${status.className}`;
+  label.textContent = status.label;
+  return label;
+}
+
 function googleSheetCsvUrl(value) {
   const url = new URL(value, window.location.href);
   const sheetMatch = url.pathname.match(/^\/spreadsheets\/d\/([^/]+)/);
@@ -313,12 +320,7 @@ function renderSheetNews(items) {
     meta.className = 'news-meta';
     meta.appendChild(tag);
     const status = recruitmentStatus(item.recruitmentState, item.recruitment);
-    if (status) {
-      const statusLabel = document.createElement('span');
-      statusLabel.className = `recruitment-status ${status.className}`;
-      statusLabel.textContent = status.label;
-      meta.appendChild(statusLabel);
-    }
+    if (status) meta.appendChild(createRecruitmentStatusLabel(status));
     const title = document.createElement('p');
     title.textContent = item.title;
     const arrow = document.createElement('i');
@@ -576,6 +578,15 @@ function openNewsModal(item) {
   card.append(close, label, title);
   addModalDetail(card, 'DATE', formatNewsDate(item.date));
   addModalDetail(card, 'CATEGORY', item.category || 'お知らせ');
+  const recruitment = recruitmentStatus(item.recruitmentState, item.recruitment);
+  if (recruitment) {
+    const recruitmentDetail = document.createElement('div');
+    recruitmentDetail.className = 'event-modal-detail news-modal-recruitment';
+    const recruitmentHeading = document.createElement('strong');
+    recruitmentHeading.textContent = 'RECRUITMENT';
+    recruitmentDetail.append(recruitmentHeading, createRecruitmentStatusLabel(recruitment));
+    card.appendChild(recruitmentDetail);
+  }
   addLinkedModalDetail(card, 'DETAIL', item.detail);
   if (/^https?:\/\//i.test(item.link || '')) {
     const relatedLink = document.createElement('a');
