@@ -95,3 +95,67 @@ body{background:#fff;color:#111;letter-spacing:.01em}.site-header{position:stick
   .menu-button[aria-expanded="true"] span:nth-child(2){opacity:0}
   .menu-button[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 }
+
+/* Timetable */
+.timetable{background:#f1f1f1}
+.timetable .section-heading h2{font-size:clamp(30px,3.2vw,42px)}
+.timetable .eyebrow{margin-bottom:9px;font-size:10px;letter-spacing:.16em;opacity:.68}
+.timetable .day-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:34px;border:1px solid #111}
+.timetable .day-tab{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:15px 18px;border-right:1px solid #111;border-bottom:0;background:#fff;color:#777;font:800 16px/1.25 "Noto Sans JP",sans-serif;text-align:left}
+.timetable .day-tab:last-child{border-right:0}
+.timetable .day-tab small{font:700 10px/1.2 "DM Sans",sans-serif;letter-spacing:.08em}
+.timetable .day-tab.active{background:#111;color:#fff}
+.timetable .day-tab:focus-visible{outline:3px solid #777;outline-offset:3px;position:relative;z-index:1}
+.timetable .timeline{background:#fff;border:1px solid #111;border-top:0}
+.timetable .timeline>div{grid-template-columns:100px minmax(190px,.65fr) 1fr;min-height:98px;padding:22px}
+.timetable .timeline time{font-size:17px}
+.timetable .timeline span{color:#666}
+.portal-links{border-top:0;padding-top:0}
+.global-nav a:nth-child(7)::before{content:"07"}
+
+@media(max-width:760px){
+  .timetable .section-heading h2{font-size:32px}
+  .timetable .day-tabs{grid-template-columns:repeat(2,1fr)}
+  .timetable .day-tab:nth-child(2){border-right:0}
+  .timetable .day-tab:nth-child(-n+2){border-bottom:1px solid #111}
+  .timetable .timeline>div{grid-template-columns:72px 1fr;padding:18px}
+  .timetable .timeline span{grid-column:2}
+}
+
+/* Unified section-heading system */
+.department-links>p,
+.portal-groups .portal-group h3::before,
+.portal-groups>.news .eyebrow,
+.week-head .eyebrow{
+  display:block!important;
+  margin:0 0 9px!important;
+  color:inherit;
+  font:700 10px/1.3 "DM Sans",sans-serif!important;
+  letter-spacing:.16em!important;
+  text-transform:uppercase;
+  opacity:.68;
+}
+.week-head h2,
+.department-title,
+.portal-groups .portal-group h3,
+.portal-groups>.news .section-heading h2{
+  margin:0!important;
+  font-size:clamp(30px,3.2vw,42px)!important;
+  font-weight:800!important;
+  line-height:1.15!important;
+  letter-spacing:-.08em!important;
+}
+.department-title{margin-bottom:18px!important}
+.portal-groups .portal-group--special h3::before{content:"SPECIAL PROGRAMS"}
+.portal-groups .portal-group--utility h3::before{content:"USEFUL TOOLS"}
+.portal-groups .portal-group--about h3::before{content:"ABOUT THE FESTIVAL"}
+.portal-groups .portal-group--play h3::before{content:"PLAY WITH THE FESTIVAL"}
+
+@media(max-width:760px){
+  .week-head h2,
+  .department-title,
+  .portal-groups .portal-group h3,
+  .portal-groups>.news .section-heading h2{
+    font-size:32px!important;
+  }
+}

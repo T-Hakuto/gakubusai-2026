@@ -9,16 +9,40 @@ nav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
   menuButton.setAttribute('aria-expanded', 'false');
 }));
 
-document.querySelectorAll('.day-tab').forEach(tab => tab.addEventListener('click', () => {
-  document.querySelectorAll('.day-tab').forEach(item => {
+const dayTabs = [...document.querySelectorAll('.day-tab')];
+function selectDayTab(tab) {
+  dayTabs.forEach(item => {
     item.classList.remove('active');
     item.setAttribute('aria-selected', 'false');
+    item.tabIndex = -1;
   });
-  document.querySelectorAll('.timeline').forEach(item => item.classList.add('hidden'));
+  document.querySelectorAll('.timeline').forEach(item => {
+    item.classList.add('hidden');
+    item.hidden = true;
+  });
   tab.classList.add('active');
   tab.setAttribute('aria-selected', 'true');
-  document.getElementById(tab.dataset.day).classList.remove('hidden');
-}));
+  tab.tabIndex = 0;
+  const panel = document.getElementById(tab.dataset.day);
+  if (panel) {
+    panel.classList.remove('hidden');
+    panel.hidden = false;
+  }
+}
+dayTabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => selectDayTab(tab));
+  tab.addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    let nextIndex = index;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % dayTabs.length;
+    if (event.key === 'ArrowLeft') nextIndex = (index - 1 + dayTabs.length) % dayTabs.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = dayTabs.length - 1;
+    selectDayTab(dayTabs[nextIndex]);
+    dayTabs[nextIndex].focus();
+  });
+});
 
 const festivalStart = new Date('2026-11-20T09:30:00+09:00');
 function updateCountdown() {
@@ -607,12 +631,11 @@ if (portalLinkContainer) {
   const portalSections = [
     { title: '企画特設ページ', links: [['夏祭り', '8/11', 'https://hyuga2026-tech.github.io/Summer-P-fes-2026/'], ['24時間テレビ', '9/26–27'], ['コンパ', '10/5'], ['決起集会', '11/11'], ['古本市', '']] },
     { title: '便利機能', links: [['シフト', ''], ['経費申請', '', 'https://docs.google.com/forms/d/e/1FAIpQLScHTIsKuJUt3Hgsx67k4408f_L3Vyl4i_QO21CJdECuvWdO9A/viewform'], ['マニュアル', ''], ['マップ', '']] },
-    { title: 'What’s 学部祭？', links: [['テーマ・テーマソングについて', ''], ['インタビュー', ''], ['意気込みボード', '']] },
+    { title: '学部祭について', links: [['テーマ・テーマソングについて', ''], ['インタビュー', ''], ['意気込みボード', '']] },
     { title: '遊び', links: [['デジタル自由帳', ''], ['ゲーム', '']] }
   ];
   const portal = document.createElement('section');
   portal.className = 'portal-links'; portal.setAttribute('aria-label', '学部祭ポータルリンク');
-  const heading = document.createElement('p'); heading.textContent = 'FESTIVAL PORTAL'; portal.appendChild(heading);
   const groups = document.createElement('div'); groups.className = 'portal-groups';
   const utilityLogos = { 'シフト': '◷', '経費申請': '¥', 'マニュアル': '≡', 'マップ': '⌖' };
   portalSections.forEach((section, index) => {
