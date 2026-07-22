@@ -444,6 +444,43 @@ function eventDateTimeText(event) {
   const end = format.format(new Date(event.end?.dateTime || event.start.dateTime));
   return `${start} 〜 ${end}`;
 }
+function compactCalendarDateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+}
+function nextCalendarDate(value) {
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return value;
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+function googleCalendarRegistrationUrl(event) {
+  if (!event?.start) return '';
+  let dates = '';
+  if (event.start.date) {
+    const start = event.start.date.replace(/-/g, '');
+    const end = (event.end?.date || nextCalendarDate(event.start.date)).replace(/-/g, '');
+    dates = `${start}/${end}`;
+  } else if (event.start.dateTime) {
+    const start = compactCalendarDateTime(event.start.dateTime);
+    const end = compactCalendarDateTime(event.end?.dateTime || event.start.dateTime);
+    if (start && end) dates = `${start}/${end}`;
+  }
+  if (!dates) return '';
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.summary || '学部祭の予定',
+    dates,
+    ctz: 'Asia/Tokyo'
+  });
+  if (event.description) {
+    const parsedDescription = new DOMParser().parseFromString(String(event.description), 'text/html');
+    params.set('details', parsedDescription.body.textContent?.trim() || String(event.description));
+  }
+  if (event.location) params.set('location', event.location);
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
 function addModalDetail(container, label, content, className = '') {
   if (!content) return;
   const detail = document.createElement('div'); detail.className = `event-modal-detail ${className}`;
@@ -516,7 +553,8 @@ function openEventModal(event, colour) {
   addModalDetail(card, 'DATE & TIME', eventDateTimeText(event));
   addModalDetail(card, 'LOCATION', event.location);
   addLinkedModalDetail(card, 'DETAIL', event.description);
-  if (event.htmlLink) { const link = document.createElement('a'); link.className = 'event-modal-link'; link.href = event.htmlLink; link.target = '_blank'; link.rel = 'noreferrer'; link.textContent = 'Google カレンダーで開く →'; card.appendChild(link); }
+  const registrationUrl = googleCalendarRegistrationUrl(event);
+  if (registrationUrl) { const link = document.createElement('a'); link.className = 'event-modal-link'; link.href = registrationUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Googleカレンダーに登録 →'; link.setAttribute('aria-label', 'この予定をGoogleカレンダーに登録する画面を新しいタブで開く'); card.appendChild(link); }
   eventModal.appendChild(card); eventModal.hidden = false; document.body.style.overflow = 'hidden'; close.focus();
 }
 function openNewsModal(item) {
