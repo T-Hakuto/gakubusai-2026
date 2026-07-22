@@ -487,7 +487,7 @@ function openEventModal(event, colour) {
   card.append(close, label, title);
   addModalDetail(card, 'DATE & TIME', eventDateTimeText(event));
   addModalDetail(card, 'LOCATION', event.location);
-  addModalDetail(card, 'DETAIL', event.description, 'event-modal-description');
+  addLinkedModalDetail(card, 'DETAIL', event.description);
   if (event.htmlLink) { const link = document.createElement('a'); link.className = 'event-modal-link'; link.href = event.htmlLink; link.target = '_blank'; link.rel = 'noreferrer'; link.textContent = 'Google カレンダーで開く →'; card.appendChild(link); }
   eventModal.appendChild(card); eventModal.hidden = false; document.body.style.overflow = 'hidden'; close.focus();
 }
