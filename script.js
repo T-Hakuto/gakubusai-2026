@@ -455,6 +455,8 @@ if (portalLinkContainer) {
   const groups = document.createElement('div'); groups.className = 'portal-groups';
   portalSections.forEach((section, index) => {
     const group = document.createElement('div'); group.className = `portal-group portal-group--${['special', 'utility', 'about', 'play'][index]}`;
+    const groupIds = ['special', 'utility', 'about', 'play'];
+    group.id = groupIds[index];
     const title = document.createElement('h3'); title.textContent = section.title; group.appendChild(title);
     section.links.forEach(([label, date, url]) => {
       const link = document.createElement('a'); link.href = url || `#${label.replace(/[^a-zA-Z0-9]/g, '') || 'page'}`;
