@@ -217,6 +217,31 @@ body{background:#fff;color:#111;letter-spacing:.01em}.site-header{position:stick
 .news-search-link>span:last-child{margin-left:3px;font:400 19px/1 "DM Sans",sans-serif}
 .news-search-link:hover,.news-search-link:focus-visible{background:#111;color:#fff!important;opacity:1!important}
 .news-search-link:focus-visible{outline:3px solid #777;outline-offset:3px}
+.portal-groups .portal-group--about a{transition:transform .18s ease,box-shadow .18s ease}
+
+@media(min-width:801px){
+  .portal-groups .portal-group--about{
+    min-height:370px;
+    grid-template-columns:minmax(210px,.9fr) repeat(3,minmax(0,1fr));
+    gap:16px;
+    padding:48px clamp(24px,5vw,70px);
+  }
+  .portal-groups .portal-group--about h3{grid-column:1;align-self:center!important}
+  .portal-groups .portal-group--about a,
+  .portal-groups .portal-group--about a:nth-of-type(1),
+  .portal-groups .portal-group--about a:nth-of-type(2),
+  .portal-groups .portal-group--about a:nth-of-type(3){
+    grid-column:auto!important;
+    grid-row:auto!important;
+    width:100%!important;
+    min-height:220px;
+    align-self:center!important;
+    justify-self:stretch!important;
+    transform:none!important;
+  }
+  .portal-groups .portal-group--about a:hover,
+  .portal-groups .portal-group--about a:focus-visible{transform:none!important;box-shadow:10px 10px 0 #777}
+}
 
 @media(max-width:760px){
   .all-news-modal-card{padding:30px 20px}
