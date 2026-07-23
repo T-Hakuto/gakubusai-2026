@@ -257,6 +257,8 @@ renderDepartmentCalendar();
 const newsSection = document.getElementById('news');
 const newsList = newsSection?.querySelector('.news-list');
 const newsStatus = document.getElementById('news-status');
+let allNewsItems = [];
+let refreshAllNewsModal = null;
 
 function parseCsv(csv) {
   const rows = [];
@@ -387,7 +389,9 @@ async function loadSheetNews() {
       .sort((first, second) => newsDateValue(second.date) - newsDateValue(first.date));
     const limit = Math.max(1, Number(newsSection.dataset.newsLimit) || 5);
     if (!items.length) throw new Error('表示できるお知らせがありません');
+    allNewsItems = items;
     renderSheetNews(items.slice(0, limit));
+    if (typeof refreshAllNewsModal === 'function') refreshAllNewsModal();
     newsStatus.textContent = '';
   } catch (error) {
     newsStatus.classList.add('is-error');
@@ -571,7 +575,7 @@ function addLinkedModalDetail(container, label, content) {
   }
   detail.append(heading, value); container.appendChild(detail);
 }
-function closeEventModal() { eventModal.hidden = true; document.body.style.overflow = ''; }
+function closeEventModal() { eventModal.hidden = true; document.body.style.overflow = ''; refreshAllNewsModal = null; }
 function openEventModal(event, colour) {
   eventModal.innerHTML = '';
   const card = document.createElement('div'); card.className = 'event-modal-card'; card.style.borderTopColor = colour;
@@ -587,6 +591,7 @@ function openEventModal(event, colour) {
   eventModal.appendChild(card); eventModal.hidden = false; document.body.style.overflow = 'hidden'; close.focus();
 }
 function openNewsModal(item) {
+  refreshAllNewsModal = null;
   eventModal.innerHTML = '';
   const colour = departmentColours[String(item.category || '').trim()] || '#111';
   const card = document.createElement('div');
@@ -624,6 +629,114 @@ function openNewsModal(item) {
   document.body.style.overflow = 'hidden';
   close.focus();
 }
+function openAllNewsModal() {
+  eventModal.innerHTML = '';
+  const card = document.createElement('div');
+  card.className = 'event-modal-card all-news-modal-card';
+  const close = document.createElement('button');
+  close.className = 'event-modal-close'; close.type = 'button'; close.textContent = '×';
+  close.setAttribute('aria-label', '閉じる'); close.addEventListener('click', closeEventModal);
+  const label = document.createElement('p');
+  label.className = 'event-modal-label'; label.textContent = 'ANNOUNCEMENT ARCHIVE';
+  const title = document.createElement('h3');
+  title.className = 'event-modal-title'; title.textContent = 'お知らせ一覧';
+
+  const filters = document.createElement('div');
+  filters.className = 'all-news-filters';
+  const searchLabel = document.createElement('label');
+  searchLabel.className = 'all-news-field'; searchLabel.innerHTML = '<span>内容検索</span>';
+  const searchInput = document.createElement('input');
+  searchInput.type = 'search'; searchInput.placeholder = 'キーワードを入力'; searchInput.autocomplete = 'off';
+  searchLabel.appendChild(searchInput);
+
+  const departmentLabel = document.createElement('label');
+  departmentLabel.className = 'all-news-field'; departmentLabel.innerHTML = '<span>部署</span>';
+  const departmentSelect = document.createElement('select');
+  const allDepartments = document.createElement('option');
+  allDepartments.value = ''; allDepartments.textContent = 'すべての部署'; departmentSelect.appendChild(allDepartments);
+  [...new Set(allNewsItems.map(item => String(item.category || '').trim()).filter(Boolean))]
+    .sort((first, second) => first.localeCompare(second, 'ja'))
+    .forEach(department => {
+      const option = document.createElement('option'); option.value = department; option.textContent = department;
+      departmentSelect.appendChild(option);
+    });
+  departmentLabel.appendChild(departmentSelect);
+
+  const openOnlyLabel = document.createElement('label');
+  openOnlyLabel.className = 'all-news-checkbox';
+  const openOnly = document.createElement('input'); openOnly.type = 'checkbox';
+  const openOnlyText = document.createElement('span'); openOnlyText.textContent = '募集中のみ表示';
+  openOnlyLabel.append(openOnly, openOnlyText);
+  filters.append(searchLabel, departmentLabel, openOnlyLabel);
+
+  const count = document.createElement('p'); count.className = 'all-news-count'; count.setAttribute('aria-live', 'polite');
+  const results = document.createElement('div'); results.className = 'all-news-results';
+
+  function renderResults() {
+    const keyword = searchInput.value.trim().toLocaleLowerCase('ja');
+    const department = departmentSelect.value;
+    const filtered = allNewsItems.filter(item => {
+      const searchable = `${item.title || ''} ${item.detail || ''}`.toLocaleLowerCase('ja');
+      const recruitment = recruitmentStatus(item.recruitmentState, item.recruitment);
+      return (!keyword || searchable.includes(keyword))
+        && (!department || String(item.category || '').trim() === department)
+        && (!openOnly.checked || recruitment?.label === '募集中');
+    });
+    count.textContent = `${filtered.length}件のお知らせ`;
+    if (!filtered.length) {
+      const empty = document.createElement('p');
+      empty.className = 'all-news-empty';
+      empty.textContent = allNewsItems.length ? '条件に一致するお知らせはありません。' : 'お知らせを読み込んでいます…';
+      results.replaceChildren(empty);
+      return;
+    }
+    const fragment = document.createDocumentFragment();
+    filtered.forEach(item => {
+      const button = document.createElement('button');
+      button.className = 'all-news-result'; button.type = 'button';
+      button.setAttribute('aria-label', `${item.title}の詳細を表示`);
+      button.addEventListener('click', () => openNewsModal(item));
+      const time = document.createElement('time'); time.textContent = formatNewsDate(item.date);
+      const meta = document.createElement('span'); meta.className = 'all-news-result-meta';
+      const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = item.category || 'お知らせ';
+      const departmentColour = departmentColours[String(item.category || '').trim()];
+      if (departmentColour) {
+        tag.style.backgroundColor = departmentColour; tag.style.borderColor = departmentColour;
+        tag.style.color = readableTextColour(departmentColour);
+      }
+      meta.appendChild(tag);
+      const recruitment = recruitmentStatus(item.recruitmentState, item.recruitment);
+      if (recruitment) meta.appendChild(createRecruitmentStatusLabel(recruitment));
+      const heading = document.createElement('strong'); heading.textContent = item.title;
+      const arrow = document.createElement('span'); arrow.className = 'all-news-result-arrow'; arrow.textContent = '→';
+      button.append(time, meta, heading, arrow); fragment.appendChild(button);
+    });
+    results.replaceChildren(fragment);
+  }
+  refreshAllNewsModal = () => {
+    const selected = departmentSelect.value;
+    [...departmentSelect.options].slice(1).forEach(option => option.remove());
+    [...new Set(allNewsItems.map(item => String(item.category || '').trim()).filter(Boolean))]
+      .sort((first, second) => first.localeCompare(second, 'ja'))
+      .forEach(department => {
+        const option = document.createElement('option'); option.value = department; option.textContent = department;
+        departmentSelect.appendChild(option);
+      });
+    departmentSelect.value = [...departmentSelect.options].some(option => option.value === selected) ? selected : '';
+    renderResults();
+  };
+  searchInput.addEventListener('input', renderResults);
+  departmentSelect.addEventListener('change', renderResults);
+  openOnly.addEventListener('change', renderResults);
+  card.append(close, label, title, filters, count, results);
+  eventModal.appendChild(card);
+  eventModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  renderResults(); searchInput.focus();
+}
+newsSection?.querySelector('a[href="#all-news"]')?.addEventListener('click', event => {
+  event.preventDefault(); openAllNewsModal();
+});
 eventModal.addEventListener('click', event => { if (event.target === eventModal) closeEventModal(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !eventModal.hidden) closeEventModal(); });
 const portalLinkContainer = document.querySelector('.department-links');
