@@ -212,6 +212,11 @@ body{background:#fff;color:#111;letter-spacing:.01em}.site-header{position:stick
 .all-news-result:hover .recruitment-status.is-soon,.all-news-result:focus-visible .recruitment-status.is-soon{background:#ffad32;color:#111}
 .all-news-result:hover .recruitment-status.is-closed,.all-news-result:focus-visible .recruitment-status.is-closed{border-color:#ef5145;color:#ff776c}
 .all-news-empty{margin:0;padding:38px 12px;border-bottom:1px solid #111;text-align:center;font-size:13px;color:#666}
+.news-search-link{display:inline-flex;align-items:center;gap:10px;min-height:46px;padding:9px 14px;border:1px solid #111;background:#fff;color:#111;font-size:13px;font-weight:800;white-space:nowrap}
+.news-search-link .news-search-icon{font:400 25px/1 "DM Sans",sans-serif;transform:rotate(-12deg)}
+.news-search-link>span:last-child{margin-left:3px;font:400 19px/1 "DM Sans",sans-serif}
+.news-search-link:hover,.news-search-link:focus-visible{background:#111;color:#fff!important;opacity:1!important}
+.news-search-link:focus-visible{outline:3px solid #777;outline-offset:3px}
 
 @media(max-width:760px){
   .all-news-modal-card{padding:30px 20px}
@@ -222,6 +227,7 @@ body{background:#fff;color:#111;letter-spacing:.01em}.site-header{position:stick
   .all-news-result-meta{grid-column:1;grid-row:2;flex-wrap:wrap}
   .all-news-result strong{grid-column:1;grid-row:3}
   .all-news-result-arrow{grid-column:2;grid-row:1 / span 3}
+  .news-search-link{min-height:44px}
 }
 
 @media(max-width:760px){
